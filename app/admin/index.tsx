@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   Dimensions,
+  Image,
 } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import { router } from 'expo-router';
@@ -110,6 +111,11 @@ export default function AdminDashboard() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
+        <Image
+          source={require('../../assets/images/logo.png')}
+          style={styles.logo}
+          resizeMode="contain"
+        />
         <Text style={styles.headerTitle}>Admin Dashboard</Text>
         <Text style={styles.headerSubtitle}>Welcome back, {user?.full_name}</Text>
       </View>
@@ -221,7 +227,8 @@ export default function AdminDashboard() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  header: { backgroundColor: COLORS.primary, padding: SPACING.lg, paddingTop: SPACING.xl + 20 },
+  header: { backgroundColor: COLORS.primary, padding: SPACING.lg, paddingTop: SPACING.xl + 20, alignItems: 'center' },
+  logo: { width: 80, height: 80, marginBottom: SPACING.sm },
   headerTitle: { ...TYPOGRAPHY.h2, color: COLORS.white },
   headerSubtitle: { ...TYPOGRAPHY.body2, color: COLORS.white, opacity: 0.9, marginTop: SPACING.xs },
   content: { flex: 1 },

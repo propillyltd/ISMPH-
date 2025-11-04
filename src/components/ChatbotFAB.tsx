@@ -21,7 +21,7 @@ interface Message {
 }
 
 const AI_RESPONSES: Record<string, string> = {
-  hello: 'Hello! I\'m your ISMPH health assistant. How can I help you today?',
+  hello: 'Hello! I\'m your ISMPH AI Assistant. How can I help you today?',
   cholera: 'Cholera is a bacterial infection. Symptoms include diarrhea and dehydration. Prevention includes clean water and hygiene. Should I provide more details?',
   report: 'To submit a report, go to the Reports tab and tap the + button. You can report facility issues, equipment shortages, or service quality concerns.',
   phc: 'Primary Healthcare Centers (PHCs) provide basic health services. You can find nearby PHCs in the Feedback tab by tapping "Find PHC".',
@@ -107,7 +107,7 @@ export const ChatbotFAB: React.FC = () => {
                 <Bot size={24} color={COLORS.white} />
               </View>
               <View>
-                <Text style={styles.headerTitle}>AI Health Assistant</Text>
+                <Text style={styles.headerTitle}>ISMPH AI Assistant</Text>
                 <Text style={styles.headerSubtitle}>Online • Instant replies</Text>
               </View>
             </View>
