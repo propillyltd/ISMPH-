@@ -15,7 +15,7 @@ export class ChatService {
   async getMessagesForZone(zone: string): Promise<Message[]> {
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('chat_history')
         .select(`
           id,
           user_id,
@@ -41,8 +41,8 @@ export class ChatService {
         zone: msg.zone,
         message: msg.message,
         timestamp: msg.timestamp,
-        sender_name: msg.profiles?.[0]?.full_name || 'Unknown User',
-        sender_role: msg.profiles?.[0]?.role || 'staff',
+        sender_name: msg.profiles?.full_name || 'Unknown User',
+        sender_role: msg.profiles?.role || 'staff',
       }));
     } catch (error) {
       console.error('Error in getMessagesForZone:', error);
@@ -53,7 +53,7 @@ export class ChatService {
   async sendMessage(zone: string, message: string, userId: string): Promise<Message> {
     try {
       const { data, error } = await supabase
-        .from('messages')
+        .from('chat_history')
         .insert({
           user_id: userId,
           zone,
@@ -71,11 +71,15 @@ export class ChatService {
             role
           )
         `)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Error sending message:', error);
         throw new Error('Failed to send message');
+      }
+
+      if (!data) {
+        throw new Error('No data returned from insert');
       }
 
       return {
@@ -84,8 +88,8 @@ export class ChatService {
         zone: data.zone,
         message: data.message,
         timestamp: data.timestamp,
-        sender_name: data.profiles?.[0]?.full_name || 'Unknown User',
-        sender_role: data.profiles?.[0]?.role || 'staff',
+        sender_name: data.profiles?.full_name || 'Unknown User',
+        sender_role: data.profiles?.role || 'staff',
       };
     } catch (error) {
       console.error('Error in sendMessage:', error);
@@ -102,14 +106,14 @@ export class ChatService {
           {
             event: 'INSERT',
             schema: 'public',
-            table: 'messages',
+            table: 'chat_history',
             filter: `zone=eq.${zone}`,
           },
           async (payload) => {
             try {
               // Fetch the complete message with profile data
               const { data, error } = await supabase
-                .from('messages')
+                .from('chat_history')
                 .select(`
                   id,
                   user_id,
@@ -122,9 +126,9 @@ export class ChatService {
                   )
                 `)
                 .eq('id', payload.new.id)
-                .single();
+                .maybeSingle();
 
-              if (error) {
+              if (error || !data) {
                 console.error('Error fetching new message:', error);
                 return;
               }
@@ -135,8 +139,8 @@ export class ChatService {
                 zone: data.zone,
                 message: data.message,
                 timestamp: data.timestamp,
-                sender_name: data.profiles?.[0]?.full_name || 'Unknown User',
-                sender_role: data.profiles?.[0]?.role || 'staff',
+                sender_name: data.profiles?.full_name || 'Unknown User',
+                sender_role: data.profiles?.role || 'staff',
               };
 
               callback(message);
@@ -189,7 +193,7 @@ export class ChatService {
   async getMessageCount(zone: string): Promise<number> {
     try {
       const { count, error } = await supabase
-        .from('messages')
+        .from('chat_history')
         .select('*', { count: 'exact', head: true })
         .eq('zone', zone);
 

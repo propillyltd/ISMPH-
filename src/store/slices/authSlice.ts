@@ -32,7 +32,7 @@ export const signIn = createAsyncThunk(
         .from('profiles')
         .select('*')
         .eq('id', data.user.id)
-        .single();
+        .maybeSingle();
 
       return { session: data.session, user: profile };
     } catch (error: any) {
@@ -70,7 +70,7 @@ export const signUp = createAsyncThunk(
           .from('profiles')
           .select('*')
           .eq('id', authData.user.id)
-          .single();
+          .maybeSingle();
 
         return { session: authData.session, user: profile };
       }
