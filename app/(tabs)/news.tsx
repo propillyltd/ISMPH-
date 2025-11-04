@@ -10,6 +10,7 @@ import {
   RefreshControl,
   Image,
 } from 'react-native';
+import { router } from 'expo-router';
 import { Card } from '@/src/components/Card';
 import { Badge } from '@/src/components/Badge';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/src/constants/theme';
@@ -380,7 +381,11 @@ export default function NewsScreen() {
   };
 
   const renderNewsItem = ({ item }: { item: NewsArticle }) => (
-    <Card style={styles.newsCard} variant="elevated">
+    <Card
+      style={styles.newsCard}
+      variant="elevated"
+      onPress={() => router.push(`/news/${item.id}`)}
+    >
       <View style={styles.newsHeader}>
         <Badge label={item.priority.toUpperCase()} variant={item.priority} type="priority" />
         <TouchableOpacity>
