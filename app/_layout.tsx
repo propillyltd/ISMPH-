@@ -6,9 +6,17 @@ import Toast from 'react-native-toast-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { store } from '@/src/store';
+import { checkSession } from '@/src/store/slices/authSlice';
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  useEffect(() => {
+    // Check for existing session on app start
+    store.dispatch(checkSession()).catch((error) => {
+      console.error('Session check failed:', error);
+    });
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -17,6 +25,9 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="auth" />
+          <Stack.Screen name="categories" />
+          <Stack.Screen name="admin" />
+          <Stack.Screen name="news" />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />

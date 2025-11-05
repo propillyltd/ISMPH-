@@ -91,6 +91,27 @@ export const signOut = createAsyncThunk('auth/signOut', async (_, { rejectWithVa
   }
 });
 
+export const checkSession = createAsyncThunk('auth/checkSession', async (_, { rejectWithValue }) => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+
+    if (session?.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', session.user.id)
+        .maybeSingle();
+
+      return { session, user: profile };
+    }
+
+    return { session: null, user: null };
+  } catch (error: any) {
+    return rejectWithValue(error.message);
+  }
+});
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -134,6 +155,22 @@ const authSlice = createSlice({
         state.error = action.payload as string;
       })
       .addCase(signOut.fulfilled, (state) => {
+        state.user = null;
+        state.session = null;
+        state.isAuthenticated = false;
+      })
+      .addCase(checkSession.fulfilled, (state, action) => {
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.session = action.payload.session;
+          state.isAuthenticated = true;
+        } else {
+          state.user = null;
+          state.session = null;
+          state.isAuthenticated = false;
+        }
+      })
+      .addCase(checkSession.rejected, (state) => {
         state.user = null;
         state.session = null;
         state.isAuthenticated = false;

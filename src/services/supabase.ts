@@ -9,11 +9,20 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase credentials not found');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
-  },
-});
+let supabase: ReturnType<typeof createClient>;
+
+try {
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  });
+} catch (error) {
+  console.error('Failed to initialize Supabase client:', error);
+  throw error;
+}
+
+export { supabase };
