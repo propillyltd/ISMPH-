@@ -52,7 +52,7 @@ export const signUp = createAsyncThunk(
         email,
         password,
         options: {
-          emailRedirectTo: false ? undefined : 'ismph://auth/callback', // Disable email confirmation for development
+          emailRedirectTo: false ? undefined : 'ismph://auth/callback', // Email confirmation enabled for production
         },
       });
 

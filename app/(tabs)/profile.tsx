@@ -305,7 +305,7 @@ export default function ProfileScreen() {
               )}
             </TouchableOpacity>
           </View>
-          <Text style={styles.name}>{user?.full_name || user?.email?.split('@')[0] || 'User'}</Text>
+          <Text style={styles.name}>{user?.full_name || user?.email || 'User'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           <View style={styles.roleContainer}>
             <Text style={styles.role}>{user?.role?.toUpperCase()}</Text>

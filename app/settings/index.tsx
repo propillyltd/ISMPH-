@@ -18,13 +18,13 @@ export default function SettingsScreen() {
       icon: Bell,
       title: 'Notifications',
       description: 'Configure notification preferences',
-      onPress: () => {/* Handle notifications */},
+      onPress: () => router.push('/profile'), // Navigate to profile for notifications
     },
     {
       icon: Globe,
       title: 'Language',
       description: 'Change app language',
-      onPress: () => {/* Handle language */},
+      onPress: () => router.push('/profile'), // Navigate to profile for language
     },
     {
       icon: Shield,
