@@ -43,10 +43,24 @@ export default function ForgotPasswordScreen() {
       });
       router.back();
     } catch (error: any) {
+      let errorMessage = 'Failed to send reset email. Please try again.';
+
+      if (error?.message) {
+        if (error.message.includes('User not found')) {
+          errorMessage = 'No account found with this email address.';
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = 'Too many reset attempts. Please wait before trying again.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
       Toast.show({
         type: 'error',
         text1: 'Reset Failed',
-        text2: error || 'Failed to send reset email. Please try again.',
+        text2: errorMessage,
       });
     }
   };

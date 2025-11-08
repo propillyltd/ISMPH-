@@ -48,7 +48,24 @@ export default function AuthScreen() {
       }
       router.replace('/(tabs)');
     } catch (err: any) {
-      const errorMessage = err?.message || err || 'Please try again';
+      let errorMessage = 'Please try again';
+
+      if (err?.message) {
+        if (err.message.includes('Invalid login credentials')) {
+          errorMessage = 'Invalid email or password. Please check your credentials.';
+        } else if (err.message.includes('Email not confirmed')) {
+          errorMessage = 'Please check your email and confirm your account before signing in.';
+        } else if (err.message.includes('User already registered')) {
+          errorMessage = 'An account with this email already exists. Try signing in instead.';
+        } else if (err.message.includes('Password should be at least')) {
+          errorMessage = 'Password must be at least 6 characters long.';
+        } else if (err.message.includes('Unable to validate email address')) {
+          errorMessage = 'Please enter a valid email address.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
       Toast.show({
         type: 'error',
         text1: 'Authentication Error',

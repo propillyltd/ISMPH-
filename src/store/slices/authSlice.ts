@@ -52,7 +52,7 @@ export const signUp = createAsyncThunk(
         email,
         password,
         options: {
-          emailRedirectTo: undefined, // Disable email confirmation for now
+          emailRedirectTo: false ? undefined : 'ismph://auth/callback', // Disable email confirmation for development
         },
       });
 
@@ -98,8 +98,12 @@ export const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async (email: string, { rejectWithValue }) => {
     try {
+      const redirectTo = false
+        ? 'ismph://reset-password'
+        : 'exp://localhost:8081/--/reset-password';
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'ismph://reset-password',
+        redirectTo,
       });
       if (error) throw error;
       return { message: 'Password reset email sent successfully' };
@@ -125,6 +129,30 @@ export const checkSession = createAsyncThunk('auth/checkSession', async (_, { re
     }
 
     return { session: null, user: null };
+  } catch (error: any) {
+    return rejectWithValue(error.message);
+  }
+});
+
+export const validateSession = createAsyncThunk('auth/validateSession', async (_, { rejectWithValue }) => {
+  try {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error) throw error;
+
+    if (!session?.user) {
+      throw new Error('No active session');
+    }
+
+    // Validate session is still valid
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .maybeSingle();
+
+    if (profileError) throw profileError;
+
+    return { session, user: profile };
   } catch (error: any) {
     return rejectWithValue(error.message);
   }
@@ -200,6 +228,21 @@ const authSlice = createSlice({
         }
       })
       .addCase(checkSession.rejected, (state) => {
+        state.user = null;
+        state.session = null;
+        state.isAuthenticated = false;
+      })
+      .addCase(validateSession.pending, (state) => {
+        // Keep current state while validating
+      })
+      .addCase(validateSession.fulfilled, (state, action) => {
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.session = action.payload.session;
+          state.isAuthenticated = true;
+        }
+      })
+      .addCase(validateSession.rejected, (state) => {
         state.user = null;
         state.session = null;
         state.isAuthenticated = false;
