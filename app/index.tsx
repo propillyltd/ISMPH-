@@ -1,18 +1,57 @@
+import { useEffect, useState } from 'react';
 import { Redirect } from 'expo-router';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/src/store';
+import { useSelector, useDispatch } from 'react-redux';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { RootState, AppDispatch } from '@/src/store';
+import { checkSession } from '@/src/store/slices/authSlice';
+import { COLORS } from '@/src/constants/theme';
 
 export default function Index() {
+  const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    // Check for existing session on app start
+    const checkExistingSession = async () => {
+      try {
+        await dispatch(checkSession()).unwrap();
+      } catch (error) {
+        console.log('No existing session found');
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkExistingSession();
+  }, [dispatch]);
+
+  // Show loading while checking session
+  if (isChecking) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
 
   if (!isAuthenticated) {
     return <Redirect href="/auth" />;
   }
 
   // Redirect admin users to admin dashboard
-  if (user?.role === 'admin') {
+  if (user?.role === 'admin' || user?.role === 'super_admin') {
     return <Redirect href="/admin/index" />;
   }
 
   return <Redirect href="/(tabs)" />;
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.white,
+  },
+});
