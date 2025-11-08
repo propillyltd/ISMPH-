@@ -362,13 +362,16 @@ export default function NewsScreen() {
     setTimeout(() => setRefreshing(false), 1000);
   };
 
+  const SUPPORTING_STATES = ['Kano', 'Kaduna', 'Lagos'];
+  
   const filteredNews = DEMO_NEWS.filter((article) => {
     const matchesSearch =
       searchQuery === '' ||
       article.title.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'All' || article.category === selectedCategory;
     const matchesPriority = selectedPriority === 'All' || article.priority === selectedPriority;
-    return matchesSearch && matchesCategory && matchesPriority;
+    const matchesState = SUPPORTING_STATES.some(state => article.title.toLowerCase().includes(state.toLowerCase()));
+    return matchesSearch && matchesCategory && matchesPriority && matchesState;
   });
 
   const getPriorityColor = (priority: string) => {
@@ -384,7 +387,13 @@ export default function NewsScreen() {
     <Card
       style={styles.newsCard}
       variant="elevated"
-      onPress={() => router.push(`/news/${item.id}`)}
+      onPress={() => {
+        // Categorize news by state when clicked
+        const stateCategory = SUPPORTING_STATES.find(state =>
+          item.title.toLowerCase().includes(state.toLowerCase())
+        ) || 'General';
+        router.push(`/news/${item.id}?state=${stateCategory}`);
+      }}
     >
       <View style={styles.newsHeader}>
         <Badge label={item.priority.toUpperCase()} variant={item.priority} type="priority" />

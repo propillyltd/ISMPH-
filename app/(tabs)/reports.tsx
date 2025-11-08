@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -76,6 +76,13 @@ export default function ReportsScreen() {
     reporterAddress: '',
   });
 
+  // Auto-populate email from logged-in user
+  useEffect(() => {
+    if (user?.email && !formData.reporterEmail) {
+      setFormData(prev => ({ ...prev, reporterEmail: user.email }));
+    }
+  }, [user?.email]);
+
   const requestPermissions = async () => {
     const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
     const galleryStatus = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -128,20 +135,40 @@ export default function ReportsScreen() {
   };
 
   const handleSubmit = () => {
-    if (!formData.title || !formData.description) {
-      Toast.show({
-        type: 'error',
-        text1: 'Missing Information',
-        text2: 'Please fill in all required fields',
-      });
-      return;
+    // Comprehensive error handling for all required fields
+    const errors = [];
+
+    if (!formData.title.trim()) {
+      errors.push('Report title is required');
     }
 
-    if (!formData.reporterName || !formData.reporterEmail) {
+    if (!formData.description.trim()) {
+      errors.push('Report description is required');
+    }
+
+    if (!formData.state) {
+      errors.push('State selection is required');
+    }
+
+    if (!formData.category) {
+      errors.push('Category selection is required');
+    }
+
+    if (!formData.reporterName.trim()) {
+      errors.push('Your full name is required');
+    }
+
+    if (!formData.reporterEmail.trim()) {
+      errors.push('Email address is required');
+    } else if (!/\S+@\S+\.\S+/.test(formData.reporterEmail)) {
+      errors.push('Please enter a valid email address');
+    }
+
+    if (errors.length > 0) {
       Toast.show({
         type: 'error',
-        text1: 'Contact Information Required',
-        text2: 'Please provide your name and email',
+        text1: 'Missing or Invalid Information',
+        text2: errors[0], // Show first error
       });
       return;
     }
@@ -341,15 +368,6 @@ export default function ReportsScreen() {
               required
             />
 
-            <FormInput
-              label="Email Address"
-              value={formData.reporterEmail}
-              onChangeText={(text) => setFormData({ ...formData, reporterEmail: text })}
-              placeholder="your.email@example.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              required
-            />
 
             <FormInput
               label="Phone Number"

@@ -51,6 +51,9 @@ export const signUp = createAsyncThunk(
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: undefined, // Disable email confirmation for now
+        },
       });
 
       if (authError) throw authError;
@@ -90,6 +93,21 @@ export const signOut = createAsyncThunk('auth/signOut', async (_, { rejectWithVa
     return rejectWithValue(error.message);
   }
 });
+
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async (email: string, { rejectWithValue }) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'ismph://reset-password',
+      });
+      if (error) throw error;
+      return { message: 'Password reset email sent successfully' };
+    } catch (error: any) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 export const checkSession = createAsyncThunk('auth/checkSession', async (_, { rejectWithValue }) => {
   try {
@@ -158,6 +176,17 @@ const authSlice = createSlice({
         state.user = null;
         state.session = null;
         state.isAuthenticated = false;
+      })
+      .addCase(resetPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.loading = false;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       })
       .addCase(checkSession.fulfilled, (state, action) => {
         if (action.payload.user) {

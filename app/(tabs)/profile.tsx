@@ -39,6 +39,42 @@ const LANGUAGES = [
   { code: 'ig', name: 'Igbo', flag: '🇳🇬' },
 ];
 
+// Language translations
+const TRANSLATIONS = {
+  en: {
+    profile: 'Profile',
+    preferences: 'Preferences',
+    notifications: 'Notifications',
+    language: 'Language',
+    settings: 'Settings',
+    signOut: 'Sign Out',
+  },
+  ha: {
+    profile: 'Profile',
+    preferences: 'Zaɓuɓɓuka',
+    notifications: 'Sanarwa',
+    language: 'Harshe',
+    settings: 'Saituna',
+    signOut: 'Fita',
+  },
+  yo: {
+    profile: 'Profaili',
+    preferences: 'Awọn ayanfẹ',
+    notifications: 'Awọn iwifunni',
+    language: 'Ede',
+    settings: 'Eto',
+    signOut: 'Jade',
+  },
+  ig: {
+    profile: 'Profaịlụ',
+    preferences: 'Mmasị',
+    notifications: 'Ngosi',
+    language: 'Asụsụ',
+    settings: 'Ntọala',
+    signOut: 'Pụọ',
+  },
+};
+
 export default function ProfileScreen() {
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -48,6 +84,9 @@ export default function ProfileScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(user?.notification_enabled ?? true);
   const [selectedLanguage, setSelectedLanguage] = useState(user?.language_preference || 'en');
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Get translations based on selected language
+  const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
 
   const requestPermissions = async () => {
     const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
@@ -238,7 +277,7 @@ export default function ProfileScreen() {
           style={styles.logo}
           resizeMode="contain"
         />
-        <Text style={styles.headerTitle}>Profile</Text>
+        <Text style={styles.headerTitle}>{t.profile}</Text>
       </View>
 
       <ScrollView style={styles.content}>
@@ -266,7 +305,7 @@ export default function ProfileScreen() {
               )}
             </TouchableOpacity>
           </View>
-          <Text style={styles.name}>{user?.full_name || 'User'}</Text>
+          <Text style={styles.name}>{user?.full_name || user?.email?.split('@')[0] || 'User'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           <View style={styles.roleContainer}>
             <Text style={styles.role}>{user?.role?.toUpperCase()}</Text>
@@ -275,13 +314,13 @@ export default function ProfileScreen() {
         </Card>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Preferences</Text>
+          <Text style={styles.sectionTitle}>{t.preferences}</Text>
 
           <Card style={styles.menuCard}>
             <View style={styles.menuItem}>
               <View style={styles.menuLeft}>
                 <Bell size={24} color={COLORS.text} />
-                <Text style={styles.menuText}>Notifications</Text>
+                <Text style={styles.menuText}>{t.notifications}</Text>
               </View>
               <Switch
                 value={notificationsEnabled}
@@ -299,7 +338,7 @@ export default function ProfileScreen() {
             >
               <View style={styles.menuLeft}>
                 <Globe size={24} color={COLORS.text} />
-                <Text style={styles.menuText}>Language</Text>
+                <Text style={styles.menuText}>{t.language}</Text>
               </View>
               <View style={styles.menuRight}>
                 <Text style={styles.menuValue}>{getLanguageName()}</Text>
@@ -309,10 +348,10 @@ export default function ProfileScreen() {
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.menuItem}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/settings')}>
               <View style={styles.menuLeft}>
                 <Settings size={24} color={COLORS.text} />
-                <Text style={styles.menuText}>Settings</Text>
+                <Text style={styles.menuText}>{t.settings}</Text>
               </View>
               <ChevronRight size={20} color={COLORS.textSecondary} />
             </TouchableOpacity>
@@ -321,7 +360,7 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <Button
-            title="Sign Out"
+            title={t.signOut}
             onPress={handleSignOut}
             variant="secondary"
             icon={<LogOut size={20} color={COLORS.white} />}

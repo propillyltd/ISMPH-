@@ -28,6 +28,8 @@ export default function RootLayout() {
           <Stack.Screen name="categories" />
           <Stack.Screen name="admin" />
           <Stack.Screen name="news" />
+          <Stack.Screen name="settings" />
+          <Stack.Screen name="forgot-password" />
           <Stack.Screen name="+not-found" />
         </Stack>
         <StatusBar style="auto" />
