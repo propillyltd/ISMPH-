@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { COLORS, SPACING, TYPOGRAPHY } from '../constants/theme';
-import { MessageCircle, Instagram, Facebook, Mail } from 'lucide-react-native';
+import { MessageCircle, Instagram, Facebook, Mail, Youtube } from 'lucide-react-native';
 
 export const SocialFooter: React.FC = () => {
   const openLink = async (url: string) => {
@@ -37,10 +37,10 @@ export const SocialFooter: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: '#1877F2' + '20' }]}
+          style={[styles.iconButton, { backgroundColor: '#0077B5' + '20' }]}
           onPress={() => openLink('https://www.linkedin.com/company/ismph/')}
         >
-          <Facebook size={24} color="#1877F2" />
+          <Facebook size={24} color="#0077B5" />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -54,7 +54,7 @@ export const SocialFooter: React.FC = () => {
           style={[styles.iconButton, { backgroundColor: '#FF0000' + '20' }]}
           onPress={() => openLink('https://youtube.com/@ismphnigeria8768?si=Y5AwYZu5nxAJYolp')}
         >
-          <Mail size={24} color="#FF0000" />
+          <Youtube size={24} color="#FF0000" />
         </TouchableOpacity>
       </View>
       <Text style={styles.copyright}>© 2025 ISMPH Nigeria. All rights reserved.</Text>
