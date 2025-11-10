@@ -1,14 +1,53 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Modal, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { Card } from '@/src/components/Card';
 import { Button } from '@/src/components/Button';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/src/constants/theme';
-import { ArrowLeft, Settings, User, Bell, Globe, Shield, HelpCircle } from 'lucide-react-native';
-import { useLanguage } from '@/src/contexts/LanguageContext';
+import { ArrowLeft, Settings, User, Bell, Globe, Shield, HelpCircle, X } from 'lucide-react-native';
+import { useLanguage, LANGUAGES } from '@/src/contexts/LanguageContext';
+import { useSelector, useDispatch } from 'react-redux';
+import { RootState, AppDispatch } from '@/src/store';
+import { setUser } from '@/src/store/slices/authSlice';
+import { supabase } from '@/src/services/supabase';
+import Toast from 'react-native-toast-message';
 
 export default function SettingsScreen() {
-  const { t } = useLanguage();
+  const { t, currentLanguage, setLanguage } = useLanguage();
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+
+  const updateLanguage = async (languageCode: string) => {
+    if (!user?.id) return;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ language_preference: languageCode })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setLanguage(languageCode);
+      dispatch(setUser({ ...user, language_preference: languageCode }));
+      setShowLanguageModal(false);
+
+      Toast.show({
+        type: 'success',
+        text1: t('languageUpdated'),
+        text2: `${LANGUAGES.find(l => l.code === languageCode)?.name}`,
+      });
+    } catch (error) {
+      console.error('Error updating language:', error);
+      Toast.show({
+        type: 'error',
+        text1: t('updateFailed'),
+        text2: t('failedToUpdateLanguage'),
+      });
+    }
+  };
 
   const settingsOptions = [
     {
@@ -27,10 +66,7 @@ export default function SettingsScreen() {
       icon: Globe,
       title: t('language'),
       description: t('languageDesc'),
-      onPress: () => {
-        // Open language modal directly from settings
-        router.push('/profile?tab=language');
-      },
+      onPress: () => setShowLanguageModal(true), // Open language modal directly
     },
     {
       icon: Shield,
@@ -89,6 +125,45 @@ export default function SettingsScreen() {
           </Card>
         </View>
       </ScrollView>
+
+      {/* Language Selection Modal */}
+      <Modal visible={showLanguageModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('selectLanguage')}</Text>
+              <TouchableOpacity onPress={() => setShowLanguageModal(false)}>
+                <X size={24} color={COLORS.text} />
+              </TouchableOpacity>
+            </View>
+
+            {LANGUAGES.map((language, index) => (
+              <React.Fragment key={language.code}>
+                <TouchableOpacity
+                  style={styles.languageOption}
+                  onPress={() => updateLanguage(language.code)}
+                >
+                  <View style={styles.languageLeft}>
+                    <Text style={styles.languageFlag}>{language.flag}</Text>
+                    <Text style={styles.languageText}>{language.name}</Text>
+                  </View>
+                  {currentLanguage === language.code && (
+                    <View style={styles.selectedIndicator} />
+                  )}
+                </TouchableOpacity>
+                {index < LANGUAGES.length - 1 && <View style={styles.modalDivider} />}
+              </React.Fragment>
+            ))}
+
+            <Button
+              title={t('cancel')}
+              onPress={() => setShowLanguageModal(false)}
+              variant="outline"
+              style={{ marginTop: SPACING.md }}
+            />
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
