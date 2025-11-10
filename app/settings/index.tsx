@@ -5,37 +5,43 @@ import { Card } from '@/src/components/Card';
 import { Button } from '@/src/components/Button';
 import { COLORS, SPACING, TYPOGRAPHY } from '@/src/constants/theme';
 import { ArrowLeft, Settings, User, Bell, Globe, Shield, HelpCircle } from 'lucide-react-native';
+import { useLanguage } from '@/src/contexts/LanguageContext';
 
 export default function SettingsScreen() {
+  const { t } = useLanguage();
+
   const settingsOptions = [
     {
       icon: User,
-      title: 'Account Settings',
-      description: 'Manage your account information and preferences',
+      title: t('accountSettings'),
+      description: t('accountSettingsDesc'),
       onPress: () => router.push('/profile'),
     },
     {
       icon: Bell,
-      title: 'Notifications',
-      description: 'Configure notification preferences',
+      title: t('notifications'),
+      description: t('notificationsDesc'),
       onPress: () => router.push('/profile'), // Navigate to profile for notifications
     },
     {
       icon: Globe,
-      title: 'Language',
-      description: 'Change app language',
-      onPress: () => router.push('/profile'), // Navigate to profile for language
+      title: t('language'),
+      description: t('languageDesc'),
+      onPress: () => {
+        // Open language modal directly from settings
+        router.push('/profile?tab=language');
+      },
     },
     {
       icon: Shield,
-      title: 'Privacy & Security',
-      description: 'Manage privacy settings and security options',
+      title: t('privacySecurity'),
+      description: t('privacySecurityDesc'),
       onPress: () => {/* Handle privacy */},
     },
     {
       icon: HelpCircle,
-      title: 'Help & Support',
-      description: 'Get help and contact support',
+      title: t('helpSupport'),
+      description: t('helpSupportDesc'),
       onPress: () => {/* Handle help */},
     },
   ];
@@ -50,12 +56,12 @@ export default function SettingsScreen() {
           icon={<ArrowLeft size={24} color={COLORS.white} />}
           style={styles.backButton}
         />
-        <Text style={styles.headerTitle}>Settings</Text>
+        <Text style={styles.headerTitle}>{t('settings')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content}>
-        <Text style={styles.sectionTitle}>General</Text>
+        <Text style={styles.sectionTitle}>{t('general')}</Text>
 
         {settingsOptions.map((option, index) => (
           <Card key={index} style={styles.settingCard} variant="outlined" onPress={option.onPress}>
@@ -73,7 +79,7 @@ export default function SettingsScreen() {
         ))}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.sectionTitle}>{t('about')}</Text>
           <Card style={styles.aboutCard} variant="outlined">
             <Text style={styles.appName}>ISMPH Media Tracker</Text>
             <Text style={styles.appVersion}>Version 1.0.0</Text>

@@ -85,6 +85,14 @@ export default function ProfileScreen() {
   const [selectedLanguage, setSelectedLanguage] = useState(user?.language_preference || 'en');
   const [uploadingImage, setUploadingImage] = useState(false);
 
+  // Check for language tab parameter from settings
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'language') {
+      setShowLanguageModal(true);
+    }
+  }, []);
+
   // Get translations based on selected language
   const t = TRANSLATIONS[selectedLanguage] || TRANSLATIONS.en;
 

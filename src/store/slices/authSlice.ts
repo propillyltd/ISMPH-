@@ -1,254 +1,30 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { supabase } from '../../services/supabase';
-
-interface AuthState {
-  user: any | null;
-  session: any | null;
-  loading: boolean;
-  error: string | null;
-  isAuthenticated: boolean;
-}
-
-const initialState: AuthState = {
-  user: null,
-  session: null,
-  loading: false,
-  error: null,
-  isAuthenticated: false,
-};
-
-export const signIn = createAsyncThunk(
-  'auth/signIn',
-  async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', data.user.id)
-        .maybeSingle();
-
-      return { session: data.session, user: profile };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const signUp = createAsyncThunk(
-  'auth/signUp',
-  async (
-    { email, password, fullName, role, state }: { email: string; password: string; fullName: string; role: string; state: string },
-    { rejectWithValue }
-  ) => {
-    try {
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: false ? undefined : 'ismph://auth/callback', // Email confirmation enabled for production
-        },
-      });
-
-      if (authError) throw authError;
-
-      if (authData.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: authData.user.id,
-          email,
-          full_name: fullName,
-          role,
-          state,
-        });
-
-        if (profileError) throw profileError;
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authData.user.id)
-          .maybeSingle();
-
-        return { session: authData.session, user: profile };
-      }
-
-      throw new Error('User creation failed');
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const signOut = createAsyncThunk('auth/signOut', async (_, { rejectWithValue }) => {
-  try {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-  } catch (error: any) {
-    return rejectWithValue(error.message);
-  }
-});
-
-export const resetPassword = createAsyncThunk(
-  'auth/resetPassword',
-  async (email: string, { rejectWithValue }) => {
-    try {
-      const redirectTo = false
-        ? 'ismph://reset-password'
-        : 'exp://localhost:8081/--/reset-password';
-
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo,
-      });
-      if (error) throw error;
-      return { message: 'Password reset email sent successfully' };
-    } catch (error: any) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const checkSession = createAsyncThunk('auth/checkSession', async (_, { rejectWithValue }) => {
-  try {
-    const { data: { session }, error } = await supabase.auth.getSession();
-    if (error) throw error;
-
-    if (session?.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      return { session, user: profile };
-    }
-
-    return { session: null, user: null };
-  } catch (error: any) {
-    return rejectWithValue(error.message);
-  }
-});
-
 export const validateSession = createAsyncThunk('auth/validateSession', async (_, { rejectWithValue }) => {
   try {
     const { data: { session }, error } = await supabase.auth.getSession();
+
     if (error) throw error;
 
-    if (!session?.user) {
+    if (!session) {
       throw new Error('No active session');
     }
 
-    // Validate session is still valid
+    // Get user profile data
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
-      .maybeSingle();
+      .single();
 
     if (profileError) throw profileError;
 
-    return { session, user: profile };
+    return {
+      user: {
+        ...session.user,
+        ...profile,
+      },
+      session,
+    };
   } catch (error: any) {
-    return rejectWithValue(error.message);
+    return rejectWithValue(error.message || 'Session validation failed');
   }
 });
-
-const authSlice = createSlice({
-  name: 'auth',
-  initialState,
-  reducers: {
-    setUser: (state, action: PayloadAction<any>) => {
-      state.user = action.payload;
-      state.isAuthenticated = !!action.payload;
-    },
-    clearError: (state) => {
-      state.error = null;
-    },
-  },
-  extraReducers: (builder) => {
-    builder
-      .addCase(signIn.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(signIn.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.session = action.payload.session;
-        state.isAuthenticated = true;
-      })
-      .addCase(signIn.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(signUp.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(signUp.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload.user;
-        state.session = action.payload.session;
-        state.isAuthenticated = true;
-      })
-      .addCase(signUp.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(signOut.fulfilled, (state) => {
-        state.user = null;
-        state.session = null;
-        state.isAuthenticated = false;
-      })
-      .addCase(resetPassword.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(resetPassword.fulfilled, (state) => {
-        state.loading = false;
-      })
-      .addCase(resetPassword.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload as string;
-      })
-      .addCase(checkSession.fulfilled, (state, action) => {
-        if (action.payload.user) {
-          state.user = action.payload.user;
-          state.session = action.payload.session;
-          state.isAuthenticated = true;
-        } else {
-          state.user = null;
-          state.session = null;
-          state.isAuthenticated = false;
-        }
-      })
-      .addCase(checkSession.rejected, (state) => {
-        state.user = null;
-        state.session = null;
-        state.isAuthenticated = false;
-      })
-      .addCase(validateSession.pending, (state) => {
-        // Keep current state while validating
-      })
-      .addCase(validateSession.fulfilled, (state, action) => {
-        if (action.payload.user) {
-          state.user = action.payload.user;
-          state.session = action.payload.session;
-          state.isAuthenticated = true;
-        }
-      })
-      .addCase(validateSession.rejected, (state) => {
-        state.user = null;
-        state.session = null;
-        state.isAuthenticated = false;
-      });
-  },
-});
-
-export const { setUser, clearError } = authSlice.actions;
-export default authSlice.reducer;
