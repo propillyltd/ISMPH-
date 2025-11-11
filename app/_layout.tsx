@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, usePathname, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Provider } from 'react-redux';
 import Toast from 'react-native-toast-message';
@@ -10,6 +10,24 @@ import { LanguageProvider } from '@/src/contexts/LanguageContext';
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  // Handle deep linking and web refresh issues
+  useEffect(() => {
+    // For web builds, ensure proper handling of direct URL access
+    if (typeof window !== 'undefined') {
+      // Handle browser back/forward navigation
+      const handleNavigation = () => {
+        // Force re-render on navigation changes
+        window.dispatchEvent(new Event('popstate'));
+      };
+
+      window.addEventListener('popstate', handleNavigation);
+
+      return () => {
+        window.removeEventListener('popstate', handleNavigation);
+      };
+    }
+  }, []);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

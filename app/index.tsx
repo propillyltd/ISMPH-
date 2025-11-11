@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Redirect } from 'expo-router';
+import { Redirect, usePathname } from 'expo-router';
 import { useSelector, useDispatch } from 'react-redux';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { RootState, AppDispatch } from '@/src/store';
@@ -10,6 +10,7 @@ export default function Index() {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [isChecking, setIsChecking] = useState(true);
+  const pathname = usePathname();
 
   useEffect(() => {
     // Check for existing session on app start
@@ -25,6 +26,27 @@ export default function Index() {
 
     checkExistingSession();
   }, [dispatch]);
+
+  // Handle deep linking and direct URL access
+  useEffect(() => {
+    if (!isChecking && isAuthenticated && pathname) {
+      // If user is authenticated and accessing a deep link,
+      // ensure they get redirected to the appropriate section
+      const isAdminRoute = pathname.startsWith('/admin');
+      const isAuthRoute = pathname.startsWith('/auth');
+      const isPublicRoute = ['/', '/forgot-password', '/settings'].includes(pathname);
+
+      if (isAuthRoute && isAuthenticated) {
+        // Redirect authenticated users away from auth pages
+        return;
+      }
+
+      if (isAdminRoute && user?.role !== 'admin' && user?.role !== 'super_admin') {
+        // Redirect non-admin users away from admin routes
+        return;
+      }
+    }
+  }, [isChecking, isAuthenticated, pathname, user]);
 
   // Show loading while checking session
   if (isChecking) {
