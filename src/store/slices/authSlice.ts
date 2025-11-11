@@ -54,15 +54,28 @@ export const signIn = createAsyncThunk(
           .from('profiles')
           .insert({
             id: data.user.id,
-            email: data.user.email,
-            full_name: data.user.user_metadata?.full_name || '',
+            email: data.user.email!,
+            full_name: data.user.user_metadata?.full_name || data.user.email!.split('@')[0],
             role: 'public',
             state: 'Lagos',
           })
           .select()
           .single();
 
-        if (createError) throw createError;
+        if (createError) {
+          console.warn('Could not create profile, using default data:', createError);
+          // Return user data with default profile info
+          return {
+            user: {
+              ...data.user,
+              email: data.user.email!,
+              full_name: data.user.user_metadata?.full_name || data.user.email!.split('@')[0],
+              role: 'public',
+              state: 'Lagos',
+            },
+            session: data.session,
+          };
+        }
 
         return {
           user: {
@@ -105,6 +118,8 @@ export const signUp = createAsyncThunk(
         options: {
           data: {
             full_name: fullName,
+            role: role || 'public',
+            state: state || 'Lagos',
           },
         },
       });
@@ -115,28 +130,47 @@ export const signUp = createAsyncThunk(
         throw new Error('Registration failed');
       }
 
-      // Create user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user.id,
-          email,
-          full_name: fullName,
-          role: role || 'public',
-          state: state || 'Lagos',
-        })
-        .select()
-        .single();
+      // For regular users, the database trigger will handle profile creation
+      // For demo accounts, profiles are created by the trigger
+      // We'll try to get the profile, but it might not exist immediately
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
 
-      if (profileError) throw profileError;
+        if (profileError && profileError.code !== 'PGRST116') {
+          // PGRST116 is "not found", which is expected if trigger hasn't run yet
+          console.warn('Profile not found immediately after signup:', profileError);
+        }
 
-      return {
-        user: {
-          ...data.user,
-          ...profile,
-        },
-        session: data.session,
-      };
+        return {
+          user: {
+            ...data.user,
+            ...(profile || {
+              email,
+              full_name: fullName,
+              role: role || 'public',
+              state: state || 'Lagos',
+            }),
+          },
+          session: data.session,
+        };
+      } catch (profileFetchError) {
+        // If profile fetch fails, return user data without profile
+        console.warn('Could not fetch profile after signup:', profileFetchError);
+        return {
+          user: {
+            ...data.user,
+            email,
+            full_name: fullName,
+            role: role || 'public',
+            state: state || 'Lagos',
+          },
+          session: data.session,
+        };
+      }
     } catch (error: any) {
       return rejectWithValue(error.message || 'Sign up failed');
     }
