@@ -30,18 +30,26 @@ export const signIn = createAsyncThunk(
   'auth/signIn',
   async ({ email, password }: { email: string; password: string }, { rejectWithValue }) => {
     try {
+      console.log('🔐 Starting sign in for:', email);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Sign in auth error:', error);
+        throw error;
+      }
 
       if (!data.user) {
+        console.error('❌ No user data returned from sign in');
         throw new Error('Authentication failed');
       }
 
+      console.log('✅ Auth successful, user ID:', data.user.id);
+
       // Get user profile data
+      console.log('📋 Fetching user profile...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -49,7 +57,9 @@ export const signIn = createAsyncThunk(
         .single();
 
       if (profileError) {
+        console.warn('⚠️ Profile fetch failed:', profileError);
         // If profile doesn't exist, create one
+        console.log('🛠️ Creating new profile...');
         const { data: newProfile, error: createError } = await supabase
           .from('profiles')
           .insert({
@@ -63,7 +73,8 @@ export const signIn = createAsyncThunk(
           .single();
 
         if (createError) {
-          console.warn('Could not create profile, using default data:', createError);
+          console.error('❌ Profile creation failed:', createError);
+          console.warn('⚠️ Could not create profile, using default data');
           // Return user data with default profile info
           return {
             user: {
@@ -77,6 +88,7 @@ export const signIn = createAsyncThunk(
           };
         }
 
+        console.log('✅ Profile created successfully');
         return {
           user: {
             ...data.user,
@@ -86,6 +98,7 @@ export const signIn = createAsyncThunk(
         };
       }
 
+      console.log('✅ Profile found:', profile);
       return {
         user: {
           ...data.user,
@@ -94,6 +107,7 @@ export const signIn = createAsyncThunk(
         session: data.session,
       };
     } catch (error: any) {
+      console.error('❌ Sign in failed:', error);
       return rejectWithValue(error.message || 'Sign in failed');
     }
   }
@@ -112,6 +126,7 @@ export const signUp = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      console.log('📝 Starting sign up for:', email, 'with role:', role, 'state:', state);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -124,15 +139,23 @@ export const signUp = createAsyncThunk(
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Sign up auth error:', error);
+        throw error;
+      }
 
       if (!data.user) {
+        console.error('❌ No user data returned from sign up');
         throw new Error('Registration failed');
       }
+
+      console.log('✅ Auth user created, user ID:', data.user.id);
+      console.log('📧 Email confirmation required:', !data.session);
 
       // For regular users, the database trigger will handle profile creation
       // For demo accounts, profiles are created by the trigger
       // We'll try to get the profile, but it might not exist immediately
+      console.log('📋 Attempting to fetch user profile...');
       try {
         const { data: profile, error: profileError } = await supabase
           .from('profiles')
@@ -140,9 +163,51 @@ export const signUp = createAsyncThunk(
           .eq('id', data.user.id)
           .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          // PGRST116 is "not found", which is expected if trigger hasn't run yet
-          console.warn('Profile not found immediately after signup:', profileError);
+        if (profileError) {
+          if (profileError.code === 'PGRST116') {
+            console.log('ℹ️ Profile not found (expected for new users), will create manually');
+            // Profile doesn't exist, create it manually
+            console.log('🛠️ Creating profile manually...');
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                email,
+                full_name: fullName,
+                role: role || 'public',
+                state: state || 'Lagos',
+              })
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('❌ Manual profile creation failed:', createError);
+              // Return user data without profile - app can handle this
+              return {
+                user: {
+                  ...data.user,
+                  email,
+                  full_name: fullName,
+                  role: role || 'public',
+                  state: state || 'Lagos',
+                },
+                session: data.session,
+              };
+            }
+
+            console.log('✅ Profile created manually:', newProfile);
+            return {
+              user: {
+                ...data.user,
+                ...newProfile,
+              },
+              session: data.session,
+            };
+          } else {
+            console.warn('⚠️ Unexpected profile fetch error:', profileError);
+          }
+        } else {
+          console.log('✅ Profile found:', profile);
         }
 
         return {
@@ -158,8 +223,8 @@ export const signUp = createAsyncThunk(
           session: data.session,
         };
       } catch (profileFetchError) {
+        console.error('❌ Profile fetch/creation error:', profileFetchError);
         // If profile fetch fails, return user data without profile
-        console.warn('Could not fetch profile after signup:', profileFetchError);
         return {
           user: {
             ...data.user,
@@ -172,6 +237,7 @@ export const signUp = createAsyncThunk(
         };
       }
     } catch (error: any) {
+      console.error('❌ Sign up failed:', error);
       return rejectWithValue(error.message || 'Sign up failed');
     }
   }
