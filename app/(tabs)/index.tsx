@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -41,15 +41,15 @@ export default function HomeScreen() {
     loadData();
   }, []);
 
-  const loadData = useCallback(async () => {
+  const loadData = async () => {
     await Promise.all([dispatch(fetchDiseases()), dispatch(fetchApprovedReports())]);
-  }, [dispatch]);
+  };
 
-  const onRefresh = useCallback(async () => {
+  const onRefresh = async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  }, [loadData]);
+  };
 
   const toggleZone = (zone: string) => {
     setExpandedZones((prev) => ({ ...prev, [zone]: !prev[zone] }));
@@ -92,24 +92,15 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={styles.header}
-        onPress={() => router.push('/')}
-        accessibilityLabel="ISMPH Header - Tap logo to go to home"
-        accessible={true}
-      >
+      <View style={styles.header}>
         <Image
           source={require('../../assets/images/logo.png')}
           style={styles.logo}
           resizeMode="contain"
-          accessibilityLabel="ISMPH Logo - Tap to go to home"
-          accessible={true}
         />
-        <Text style={styles.headerTitle} accessibilityLabel="ISMPH Dashboard">ISMPH Dashboard</Text>
-        <Text style={styles.headerSubtitle} accessibilityLabel={`Welcome ${user?.full_name || user?.email || 'User'}`}>
-          Welcome, {user?.full_name || user?.email}
-        </Text>
-      </TouchableOpacity>
+        <Text style={styles.headerTitle}>ISMPH Dashboard</Text>
+        <Text style={styles.headerSubtitle}>Welcome, {user?.full_name || user?.email}</Text>
+      </View>
 
       <ScrollView
         style={styles.content}
@@ -169,39 +160,21 @@ export default function HomeScreen() {
 
         {/* Quick Actions */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle} accessibilityLabel="Quick Actions section">Quick Actions</Text>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.carousel}>
-            <Card
-              style={styles.actionCard}
-              variant="elevated"
-              onPress={() => router.push('/reports')}
-              accessibilityLabel="Create Report - Submit new PHC report"
-              accessible={true}
-            >
+            <Card style={styles.actionCard} variant="elevated" onPress={() => router.push('/reports')}>
               <Plus size={32} color={COLORS.primary} />
               <Text style={styles.actionTitle}>Create Report</Text>
               <Text style={styles.actionSubtitle}>Submit new PHC report</Text>
             </Card>
 
-            <Card
-              style={styles.actionCard}
-              variant="elevated"
-              onPress={() => router.push('/reports')}
-              accessibilityLabel="Upload Media - Add photos or videos"
-              accessible={true}
-            >
+            <Card style={styles.actionCard} variant="elevated" onPress={() => router.push('/reports')}>
               <Upload size={32} color={COLORS.secondary} />
               <Text style={styles.actionTitle}>Upload Media</Text>
               <Text style={styles.actionSubtitle}>Add photos or videos</Text>
             </Card>
 
-            <Card
-              style={styles.actionCard}
-              variant="elevated"
-              onPress={() => router.push('/news')}
-              accessibilityLabel="Trending News - Latest health updates"
-              accessible={true}
-            >
+            <Card style={styles.actionCard} variant="elevated" onPress={() => router.push('/news')}>
               <TrendingUp size={32} color={COLORS.info} />
               <Text style={styles.actionTitle}>Trending News</Text>
               <Text style={styles.actionSubtitle}>Latest health updates</Text>
@@ -209,11 +182,124 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-
-        {/* Thematic Area of Focus */}
+        {/* Disease Tracker */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle} accessibilityLabel="Thematic Area of Focus section">Thematic Area of Focus</Text>
-          <Text style={styles.sectionSubtitle} accessibilityLabel="Explore health topics and policies">Explore health topics and policies</Text>
+          <Text style={styles.sectionTitle}>Disease Tracker</Text>
+          {ZONES.map((zone: string) => {
+            const zoneDiseases = diseases.filter((d: any) => d.zone === zone);
+            if (zoneDiseases.length === 0) return null;
+
+            return (
+              <Card key={zone} style={styles.zoneCard} variant="outlined">
+                <TouchableOpacity style={styles.zoneHeader} onPress={() => toggleZone(zone)}>
+                  <View style={styles.zoneHeaderLeft}>
+                    <Text style={styles.zoneTitle}>{zone}</Text>
+                    <Text style={styles.zoneSubtitle}>{zoneDiseases.length} diseases tracked</Text>
+                  </View>
+                  {expandedZones[zone] ? (
+                    <ChevronUp size={24} color={COLORS.textSecondary} />
+                  ) : (
+                    <ChevronDown size={24} color={COLORS.textSecondary} />
+                  )}
+                </TouchableOpacity>
+
+                {expandedZones[zone] && (
+                  <View style={styles.diseaseList}>
+                    {zoneDiseases.map((disease: any) => (
+                      <View key={disease.id} style={styles.diseaseCard}>
+                        <View style={styles.diseaseHeader}>
+                          <Text style={styles.diseaseName}>{disease.disease_name}</Text>
+                          <View
+                            style={[
+                              styles.severityIndicator,
+                              { backgroundColor: getSeverityColor(disease.severity) },
+                            ]}
+                          />
+                        </View>
+                        <Text style={styles.diseaseState}>{disease.state}</Text>
+
+                        <View style={styles.diseaseStats}>
+                          <View style={styles.statItem}>
+                            <Text style={styles.statLabel}>New</Text>
+                            <Text style={[styles.statValue, { color: COLORS.warning }]}>
+                              +{disease.new_cases}
+                            </Text>
+                          </View>
+                          <View style={styles.statItem}>
+                            <Text style={styles.statLabel}>Total</Text>
+                            <Text style={styles.statValue}>{disease.total_cases}</Text>
+                          </View>
+                          <View style={styles.statItem}>
+                            <Text style={styles.statLabel}>Deaths</Text>
+                            <Text style={[styles.statValue, { color: COLORS.error }]}>
+                              {disease.mortality}
+                            </Text>
+                          </View>
+                          <View style={styles.statItem}>
+                            <Text style={styles.statLabel}>Recovered</Text>
+                            <Text style={[styles.statValue, { color: COLORS.success }]}>
+                              {disease.recovered}
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* Recovery Rate Bar */}
+                        <View style={styles.rateSection}>
+                          <Text style={styles.rateLabel}>Recovery Rate: {getRecoveryRate(disease.recovered, disease.total_cases)}%</Text>
+                          <View style={styles.progressBar}>
+                            <View
+                              style={{
+                                height: '100%',
+                                width: getRecoveryRate(disease.recovered, disease.total_cases) + '%' as any,
+                                backgroundColor: COLORS.success,
+                                borderRadius: 3,
+                              }}
+                            />
+                          </View>
+                        </View>
+
+                        {/* Mortality Rate Bar */}
+                        <View style={styles.rateSection}>
+                          <Text style={styles.rateLabel}>Mortality Rate: {getMortalityRate(disease.mortality, disease.total_cases)}%</Text>
+                          <View style={styles.progressBar}>
+                            <View
+                              style={{
+                                height: '100%',
+                                width: getMortalityRate(disease.mortality, disease.total_cases) + '%' as any,
+                                backgroundColor: COLORS.error,
+                                borderRadius: 3,
+                              }}
+                            />
+                          </View>
+                        </View>
+
+                        {/* Positivity Rate Bar */}
+                        <View style={styles.rateSection}>
+                          <Text style={styles.rateLabel}>Positivity Rate: {getPositivityRate(disease.new_cases, disease.total_cases)}%</Text>
+                          <View style={styles.progressBar}>
+                            <View
+                              style={{
+                                height: '100%',
+                                width: getPositivityRate(disease.new_cases, disease.total_cases) + '%' as any,
+                                backgroundColor: COLORS.warning,
+                                borderRadius: 3,
+                              }}
+                            />
+                          </View>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </Card>
+            );
+          })}
+        </View>
+
+        {/* Thematic Categories */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Thematic Categories</Text>
+          <Text style={styles.sectionSubtitle}>Explore health topics and policies</Text>
           <View style={styles.categoriesGrid}>
             {THEMATIC_CATEGORIES.map((category) => {
               const getCategoryRoute = (id: string) => {
@@ -240,8 +326,8 @@ export default function HomeScreen() {
                   <View style={[styles.categoryIcon, { backgroundColor: category.color + '20' }]}>
                     <Text style={styles.categoryEmoji}>{category.icon}</Text>
                   </View>
-                  <Text style={styles.categoryName} accessibilityLabel={`Category: ${category.name}`}>{category.name}</Text>
-                  <Text style={styles.categoryDescription} numberOfLines={2} accessibilityLabel={`Description: ${category.description}`}>
+                  <Text style={styles.categoryName}>{category.name}</Text>
+                  <Text style={styles.categoryDescription} numberOfLines={2}>
                     {category.description}
                   </Text>
                 </Card>
@@ -252,25 +338,25 @@ export default function HomeScreen() {
 
         {/* Policy Commitments */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle} accessibilityLabel="Policy Commitments section">Policy Commitments</Text>
+          <Text style={styles.sectionTitle}>Policy Commitments</Text>
           <Card style={styles.policyCard} variant="outlined">
             <Badge label="Active" variant="custom" style={{ backgroundColor: COLORS.success }} />
-            <Text style={styles.policyTitle} accessibilityLabel="Government Support policy">Government Support</Text>
-            <Text style={styles.policyText} accessibilityLabel="Full backing from Ministry of Health for ISMPH initiatives">
+            <Text style={styles.policyTitle}>Government Support</Text>
+            <Text style={styles.policyText}>
               Full backing from Ministry of Health for ISMPH initiatives
             </Text>
           </Card>
 
           <Card style={styles.policyCard} variant="outlined">
             <Badge label="Funded" variant="custom" style={{ backgroundColor: COLORS.error }} />
-            <Text style={styles.policyTitle} accessibilityLabel="Resource Allocation policy">Resource Allocation</Text>
-            <Text style={styles.policyText} accessibilityLabel="Dedicated funding for health monitoring systems">Dedicated funding for health monitoring systems</Text>
+            <Text style={styles.policyTitle}>Resource Allocation</Text>
+            <Text style={styles.policyText}>Dedicated funding for health monitoring systems</Text>
           </Card>
 
           <Card style={styles.policyCard} variant="outlined">
             <Badge label="Enacted" variant="custom" style={{ backgroundColor: COLORS.warning }} />
-            <Text style={styles.policyTitle} accessibilityLabel="Policy Framework policy">Policy Framework</Text>
-            <Text style={styles.policyText} accessibilityLabel="New policies to strengthen disease surveillance">New policies to strengthen disease surveillance</Text>
+            <Text style={styles.policyTitle}>Policy Framework</Text>
+            <Text style={styles.policyText}>New policies to strengthen disease surveillance</Text>
           </Card>
         </View>
 
@@ -278,7 +364,7 @@ export default function HomeScreen() {
         {reports.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle} accessibilityLabel="Recent Reports section">Recent Reports</Text>
+              <Text style={styles.sectionTitle}>Recent Reports</Text>
               <TouchableOpacity onPress={() => router.push('/reports')}>
                 <Text style={styles.viewAll}>View All</Text>
               </TouchableOpacity>
@@ -286,13 +372,13 @@ export default function HomeScreen() {
             {reports.slice(0, 3).map((report: any) => (
               <Card key={report.id} style={styles.reportCard} variant="elevated">
                 <View style={styles.reportHeader}>
-                  <Text style={styles.reportTitle} accessibilityLabel={`Report title: ${report.title}`}>{report.title}</Text>
+                  <Text style={styles.reportTitle}>{report.title}</Text>
                   <Badge label={report.priority} type="priority" variant={report.priority} />
                 </View>
-                <Text style={styles.reportMeta} accessibilityLabel={`Report location and date: ${report.state}, ${new Date(report.created_at).toLocaleDateString()}`}>
+                <Text style={styles.reportMeta}>
                   {report.state} • {new Date(report.created_at).toLocaleDateString()}
                 </Text>
-                <Text style={styles.reportDescription} numberOfLines={2} accessibilityLabel={`Report description: ${report.description}`}>
+                <Text style={styles.reportDescription} numberOfLines={2}>
                   {report.description}
                 </Text>
               </Card>

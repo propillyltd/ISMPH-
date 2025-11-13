@@ -26,13 +26,13 @@ export default function AuthScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [role, setRole] = useState('public');
   const [state, setState] = useState('Lagos');
-  const [showPassword, setShowPassword] = useState(false);
 
   const handleAuth = async () => {
     try {
       if (isSignUp) {
-        await dispatch(signUp({ email, password, fullName, role: 'public', state })).unwrap();
+        await dispatch(signUp({ email, password, fullName, role, state })).unwrap();
         Toast.show({
           type: 'success',
           text1: 'Account Created',
@@ -48,28 +48,10 @@ export default function AuthScreen() {
       }
       router.replace('/(tabs)');
     } catch (err: any) {
-      let errorMessage = 'Please try again';
-
-      if (err?.message) {
-        if (err.message.includes('Invalid login credentials')) {
-          errorMessage = 'Invalid email or password. Please check your credentials.';
-        } else if (err.message.includes('Email not confirmed')) {
-          errorMessage = 'Please check your email and confirm your account before signing in.';
-        } else if (err.message.includes('User already registered')) {
-          errorMessage = 'An account with this email already exists. Try signing in instead.';
-        } else if (err.message.includes('Password should be at least')) {
-          errorMessage = 'Password must be at least 6 characters long.';
-        } else if (err.message.includes('Unable to validate email address')) {
-          errorMessage = 'Please enter a valid email address.';
-        } else {
-          errorMessage = err.message;
-        }
-      }
-
       Toast.show({
         type: 'error',
         text1: 'Authentication Error',
-        text2: errorMessage,
+        text2: err || 'Please try again',
       });
     }
   };
@@ -102,27 +84,13 @@ export default function AuthScreen() {
             required
           />
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
-            <View style={styles.passwordContainer}>
-              <FormInput
-                label=""
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-                required
-                style={styles.passwordInput}
-              />
-              <TouchableOpacity
-                style={styles.passwordToggle}
-                onPress={() => setShowPassword(!showPassword)}
-              >
-                <Text style={styles.passwordToggleText}>
-                  {showPassword ? 'Hide' : 'Show'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+          <FormInput
+            label="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            required
+          />
 
           {isSignUp && (
             <>
@@ -132,6 +100,23 @@ export default function AuthScreen() {
                 onChangeText={setFullName}
                 required
               />
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Role</Text>
+                <View style={styles.roleButtons}>
+                  {['public', 'staff', 'admin'].map((r) => (
+                    <TouchableOpacity
+                      key={r}
+                      style={[styles.roleButton, role === r && styles.roleButtonActive]}
+                      onPress={() => setRole(r)}
+                    >
+                      <Text style={[styles.roleText, role === r && styles.roleTextActive]}>
+                        {r.charAt(0).toUpperCase() + r.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.label}>State</Text>
@@ -158,14 +143,6 @@ export default function AuthScreen() {
             loading={loading}
             style={styles.submitButton}
           />
-
-          {!isSignUp && (
-            <TouchableOpacity onPress={() => router.push('/forgot-password')}>
-              <Text style={[styles.switchText, { marginTop: SPACING.sm, fontSize: 14 }]}>
-                Forgot Password?
-              </Text>
-            </TouchableOpacity>
-          )}
 
           <TouchableOpacity onPress={() => setIsSignUp(!isSignUp)}>
             <Text style={styles.switchText}>
@@ -256,24 +233,6 @@ const styles = StyleSheet.create({
   },
   roleTextActive: {
     color: COLORS.white,
-  },
-  passwordContainer: {
-    position: 'relative',
-  },
-  passwordInput: {
-    paddingRight: 60, // Make room for the toggle button
-  },
-  passwordToggle: {
-    position: 'absolute',
-    right: SPACING.sm,
-    top: '50%',
-    transform: [{ translateY: -12 }],
-    padding: SPACING.xs,
-  },
-  passwordToggleText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.primary,
-    fontWeight: '600',
   },
   submitButton: {
     marginTop: SPACING.md,
