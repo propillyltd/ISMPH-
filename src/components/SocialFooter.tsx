@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Linking } from 'react-native';
 import { COLORS, SPACING, TYPOGRAPHY } from '../constants/theme';
-import { MessageCircle, Instagram, Facebook, Mail } from 'lucide-react-native';
+import { MessageCircle, Instagram, Facebook, Mail, Youtube } from 'lucide-react-native';
 
 export const SocialFooter: React.FC = () => {
   const openLink = async (url: string) => {
@@ -24,23 +24,37 @@ export const SocialFooter: React.FC = () => {
         
         <TouchableOpacity
           style={[styles.iconButton, { backgroundColor: '#E4405F' + '20' }]}
-          onPress={() => openLink('https://instagram.com/ismph_nigeria')}
+          onPress={() => openLink('https://www.instagram.com/ismphng?igsh=MWtic2l2bjdjbHoybA==')}
         >
           <Instagram size={24} color="#E4405F" />
         </TouchableOpacity>
-        
+
         <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: '#1877F2' + '20' }]}
-          onPress={() => openLink('https://facebook.com/ismph.nigeria')}
+          style={[styles.iconButton, { backgroundColor: '#000000' + '20' }]}
+          onPress={() => openLink('https://x.com/ISMPHNG?s=09')}
         >
-          <Facebook size={24} color="#1877F2" />
+          <MessageCircle size={24} color="#000000" />
         </TouchableOpacity>
-        
+
         <TouchableOpacity
-          style={[styles.iconButton, { backgroundColor: COLORS.primary + '20' }]}
-          onPress={() => openLink('mailto:info@ismph.org.ng')}
+          style={[styles.iconButton, { backgroundColor: '#0077B5' + '20' }]}
+          onPress={() => openLink('https://www.linkedin.com/company/ismph/')}
         >
-          <Mail size={24} color={COLORS.primary} />
+          <Facebook size={24} color="#0077B5" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.iconButton, { backgroundColor: '#4267B2' + '20' }]}
+          onPress={() => openLink('https://www.facebook.com/ismph?mibextid=ZbWKwL')}
+        >
+          <Facebook size={24} color="#4267B2" />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.iconButton, { backgroundColor: '#FF0000' + '20' }]}
+          onPress={() => openLink('https://youtube.com/@ismphnigeria8768?si=Y5AwYZu5nxAJYolp')}
+        >
+          <Youtube size={24} color="#FF0000" />
         </TouchableOpacity>
       </View>
       <Text style={styles.copyright}>© 2025 ISMPH Nigeria. All rights reserved.</Text>

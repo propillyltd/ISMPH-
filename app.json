@@ -1,24 +1,70 @@
 {
   "expo": {
-    "name": "bolt-expo-nativewind",
-    "slug": "bolt-expo-nativewind",
+    "name": "ISMPH Media Tracker",
+    "slug": "ismph-media-tracker",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
+    "scheme": "ismph",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ismph.mediatracker"
+    },
+    "android": {
+      "package": "com.ismph.mediatracker",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "backgroundColor": "#2E7D32"
+      }
     },
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "ISMPH Media Tracker",
+      "shortName": "ISMPH",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#2E7D32",
+      "description": "International Society of Media in Public Health - Media Tracker App",
+      "startUrl": "/",
+      "display": "standalone",
+      "backgroundColor": "#FFFFFF",
+      "orientation": "portrait",
+      "splash": {
+        "image": "./assets/images/icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#2E7D32"
+      },
+      "build": {
+        "babel": {
+          "include": ["expo-router/babel"]
+        }
+      }
     },
-    "plugins": ["expo-router", "expo-font", "expo-web-browser"],
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-web-browser",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          },
+          "ios": {}
+        }
+      ]
+    ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id-here"
+      }
     }
   }
 }

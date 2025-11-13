@@ -64,14 +64,14 @@ export const THEMATIC_CATEGORIES = [
   {
     id: '1',
     name: 'RMNCAH',
-    fullName: 'Reproductive, Maternal, Newborn, Child and Adolescent Health',
+    fullName: 'Reproductive Maternal, Newborn, Child, and Adolescent Health',
     description: 'Comprehensive health services for mothers, newborns, children, and adolescents',
     icon: '👶',
     color: '#E91E63',
   },
   {
     id: '2',
-    name: 'Health PHC',
+    name: 'Primary Health Care',
     fullName: 'Primary Health Care',
     description: 'Basic health services and facilities at the community level',
     icon: '🏥',
@@ -87,8 +87,8 @@ export const THEMATIC_CATEGORIES = [
   },
   {
     id: '4',
-    name: 'Health Insurance',
-    fullName: 'National Health Insurance Scheme',
+    name: 'Contributory Health Insurance',
+    fullName: 'Contributory Health Insurance',
     description: 'Healthcare financing and insurance coverage programs',
     icon: '💳',
     color: '#FF9800',
