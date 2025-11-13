@@ -13,13 +13,17 @@ export default function Index() {
   const pathname = usePathname();
 
   useEffect(() => {
+    console.log('🔍 Index: Starting session check...');
     // Check for existing session on app start
     const checkExistingSession = async () => {
       try {
+        console.log('🔍 Index: Dispatching checkSession...');
         await dispatch(checkSession()).unwrap();
+        console.log('✅ Index: Session check successful');
       } catch (error) {
-        console.log('No existing session found');
+        console.log('❌ Index: Session check failed:', error);
       } finally {
+        console.log('🔍 Index: Setting isChecking to false');
         setIsChecking(false);
       }
     };
@@ -48,8 +52,11 @@ export default function Index() {
     }
   }, [isChecking, isAuthenticated, pathname, user]);
 
+  console.log('🔍 Index render: isChecking:', isChecking, 'isAuthenticated:', isAuthenticated, 'user:', user);
+
   // Show loading while checking session
   if (isChecking) {
+    console.log('🔍 Index: Showing loading spinner');
     return (
       <View style={styles.container}>
         <ActivityIndicator size="large" color={COLORS.primary} />
@@ -58,14 +65,17 @@ export default function Index() {
   }
 
   if (!isAuthenticated) {
+    console.log('🔍 Index: Redirecting to /auth');
     return <Redirect href="/auth" />;
   }
 
   // Redirect admin users to admin dashboard
   if (user?.role === 'admin' || user?.role === 'super_admin') {
-    return <Redirect href="/admin/index" />;
+    console.log('🔍 Index: Redirecting admin to /admin');
+    return <Redirect href="/admin" />;
   }
 
+  console.log('🔍 Index: Redirecting to /(tabs)');
   return <Redirect href="/(tabs)" />;
 }
 

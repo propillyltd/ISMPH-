@@ -254,23 +254,35 @@ export const signOut = createAsyncThunk('auth/signOut', async (_, { rejectWithVa
 
 export const checkSession = createAsyncThunk('auth/checkSession', async (_, { rejectWithValue }) => {
   try {
+    console.log('🔍 checkSession: Getting session from Supabase...');
     const { data: { session }, error } = await supabase.auth.getSession();
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ checkSession: Auth error:', error);
+      throw error;
+    }
 
     if (!session) {
+      console.log('ℹ️ checkSession: No active session found');
       throw new Error('No active session');
     }
 
+    console.log('✅ checkSession: Session found, user ID:', session.user.id);
+
     // Get user profile data
+    console.log('🔍 checkSession: Fetching user profile...');
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single();
 
-    if (profileError) throw profileError;
+    if (profileError) {
+      console.error('❌ checkSession: Profile fetch error:', profileError);
+      throw profileError;
+    }
 
+    console.log('✅ checkSession: Profile found:', profile);
     return {
       user: {
         ...session.user,
@@ -279,6 +291,7 @@ export const checkSession = createAsyncThunk('auth/checkSession', async (_, { re
       session,
     };
   } catch (error: any) {
+    console.error('❌ checkSession: Failed:', error);
     return rejectWithValue(error.message || 'Session check failed');
   }
 });
